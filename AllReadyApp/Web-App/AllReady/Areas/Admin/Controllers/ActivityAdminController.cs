@@ -23,7 +23,7 @@ using AllReady.Extensions;
 namespace AllReady.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize("TenantAdmin")]
+    [Authorize("OrgAdmin")]
     public class ActivityController : Controller
     {
         private readonly IAllReadyDataAccess _dataAccess;
@@ -88,7 +88,7 @@ namespace AllReady.Areas.Admin.Controllers
         {
             if (activity.EndDateTime < activity.StartDateTime)
             {
-                ModelState.AddModelError("EndDateTime", "End date cannot be earlier than the start date");
+                ModelState.AddModelError(nameof(activity.EndDateTime), "End date cannot be earlier than the start date");
             }
 
                 CampaignSummaryModel campaign = _bus.Send(new CampaignSummaryQuery { CampaignId = campaignId });
@@ -100,12 +100,12 @@ namespace AllReady.Areas.Admin.Controllers
 
             if (activity.StartDateTime < campaign.StartDate)
             {
-                ModelState.AddModelError("StartDateTime", "Start date cannot be earlier than the campaign start date " + campaign.StartDate.ToString("d"));
+                ModelState.AddModelError(nameof(activity.StartDateTime), "Start date cannot be earlier than the campaign start date " + campaign.StartDate.ToString("d"));
             }
 
             if (activity.EndDateTime > campaign.EndDate)
             {
-                ModelState.AddModelError("EndDateTime", "End date cannot be later than the campaign end date " + campaign.EndDate.ToString("d"));
+                ModelState.AddModelError(nameof(activity.EndDateTime), "End date cannot be later than the campaign end date " + campaign.EndDate.ToString("d"));
             }
 
             if (ModelState.IsValid)
@@ -170,19 +170,19 @@ namespace AllReady.Areas.Admin.Controllers
 
             if (activity.EndDateTime < activity.StartDateTime)
             {
-                ModelState.AddModelError("EndDateTime", "End date cannot be earlier than the start date");
+                ModelState.AddModelError(nameof(activity.EndDateTime), "End date cannot be earlier than the start date");
             }
 
             CampaignSummaryModel campaign = _bus.Send(new CampaignSummaryQuery { CampaignId = activity.CampaignId });
 
             if (activity.StartDateTime < campaign.StartDate)
             {
-                ModelState.AddModelError("StartDateTime", "Start date cannot be earlier than the campaign start date " + campaign.StartDate.ToString("d"));
+                ModelState.AddModelError(nameof(activity.StartDateTime), "Start date cannot be earlier than the campaign start date " + campaign.StartDate.ToString("d"));
             }
 
             if (activity.EndDateTime > campaign.EndDate)
             {
-                ModelState.AddModelError("EndDateTime", "End date cannot be later than the campaign end date " + campaign.EndDate.ToString("d"));
+                ModelState.AddModelError(nameof(activity.EndDateTime), "End date cannot be later than the campaign end date " + campaign.EndDate.ToString("d"));
             }
 
             if (ModelState.IsValid)
@@ -253,7 +253,7 @@ namespace AllReady.Areas.Admin.Controllers
             {
                 return HttpNotFound();
             }
-            if (!User.IsTenantAdmin(activity.Campaign.ManagingTenantId))
+            if (!User.IsTenantAdmin(activity.Campaign.ManagingOrganizationId))
             {
                 return HttpUnauthorized();
             }
@@ -297,7 +297,7 @@ namespace AllReady.Areas.Admin.Controllers
             //TODO: Use a command here
             Activity a = _dataAccess.GetActivity(id);
 
-            a.ImageUrl = await _imageService.UploadActivityImageAsync(a.Id, a.Campaign.ManagingTenantId, file);
+            a.ImageUrl = await _imageService.UploadActivityImageAsync(a.Id, a.Campaign.ManagingOrganizationId, file);
             await _dataAccess.UpdateActivity(a);
 
             return RedirectToRoute(new { controller = "Activity", Area = "Admin", action = "Edit", id = id });
@@ -305,7 +305,7 @@ namespace AllReady.Areas.Admin.Controllers
 
         private bool UserIsTenantAdminOfActivity(Activity activity)
         {
-            return User.IsTenantAdmin(activity.Campaign.ManagingTenantId);
+            return User.IsTenantAdmin(activity.Campaign.ManagingOrganizationId);
         }
 
         private bool UserIsTenantAdminOfActivity(int activityId)
